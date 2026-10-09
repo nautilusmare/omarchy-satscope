@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "maurice.bitcoin",
+  "name": "Satscope",
+  "version": "1.0.0",
+  "author": "maurice",
+  "license": "MIT",
+  "description": "Bitcoin at a glance: price and sparkline in the bar, plus a panel with on-chain metrics, ETF flows, prediction-market odds, and curated news.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Satscope",
+    "description": "Bitcoin at a glance — price and chart in the bar, with a panel for on-chain metrics, ETF flows, prediction-market odds, and news.",
+    "category": "Finance",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "currency": "USD",
+      "chartRange": "24h",
+      "sparkline": true,
+      "showChange": false,
+      "barAppearance": "full"
+    },
+    "schema": [
+      {
+        "key": "currency",
+        "type": "enum",
+        "label": "Currency",
+        "options": ["USD", "EUR", "GBP", "CAD", "CHF", "AUD", "JPY"],
+        "defaultValue": "USD"
+      },
+      {
+        "key": "chartRange",
+        "type": "enum",
+        "label": "Chart range",
+        "options": ["24h", "7d", "30d", "1y"],
+        "defaultValue": "24h"
+      },
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 30,
+        "max": 600,
+        "step": 30,
+        "defaultValue": 60
+      },
+      {
+        "key": "sparkline",
+        "type": "boolean",
+        "label": "Show sparkline",
+        "defaultValue": true
+      },
+      {
+        "key": "showChange",
+        "type": "boolean",
+        "label": "Show 24h change in the bar",
+        "defaultValue": false
+      },
+      {
+        "key": "barAppearance",
+        "type": "enum",
+        "label": "Bar appearance",
+        "options": ["full", "subtle"],
+        "defaultValue": "full"
+      }
+    ]
+  }
+}
