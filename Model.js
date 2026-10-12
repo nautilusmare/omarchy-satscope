@@ -127,6 +127,137 @@ function chartUrl(currency, range) {
     .replace("days=1", "days=" + days) + interval;
 }
 
+// coingecko's public market_chart endpoint throttles by IP, and a 429 body is a
+// JSON error object with no candles in it. Keyless exchange APIs serve the same
+// OHLC history, so the chart lane falls through to them instead of sitting on a
+// frozen chart until the rate limit window passes. Kraken covers all seven
+// currencies, Binance all but CHF and CAD, Bitstamp only USD/EUR/GBP.
+var BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines";
+var KRAKEN_OHLC_URL = "https://api.kraken.com/0/public/OHLC";
+var BITSTAMP_OHLC_URL = "https://www.bitstamp.net/api/v2/ohlc/";
+
+var BINANCE_PAIRS = { USD: "BTCUSDT", EUR: "BTCEUR", GBP: "BTCGBP", AUD: "BTCAUD", JPY: "BTCJPY" };
+var KRAKEN_PAIRS = { USD: "XBTUSD", EUR: "XBTEUR", GBP: "XBTGBP", CAD: "XBTCAD", CHF: "XBTCHF", JPY: "XBTJPY", AUD: "XBTAUD" };
+var BITSTAMP_PAIRS = { USD: "btcusd", EUR: "btceur", GBP: "btcgbp" };
+
+// Candle size per range, kept close to coingecko's own granularity so both
+// sources draw the same shape: 5-minute candles over 24h, hourly up to 30d,
+// daily for 1y. Kraken OHLC takes no limit and always answers its 720 most
+// recent candles, so every fallback series is trimmed to `points`.
+var CHART_STEPS = {
+  "24h": { binance: "5m", kraken: 5, bitstamp: 300, points: 288 },
+  "7d": { binance: "1h", kraken: 60, bitstamp: 3600, points: 168 },
+  "30d": { binance: "1h", kraken: 60, bitstamp: 3600, points: 720 },
+  "1y": { binance: "1d", kraken: 1440, bitstamp: 86400, points: 366 }
+};
+
+// Ordered so coingecko stays the primary source and the mirrors are requested
+// only when its body carried no candles. `check` is the substring the shell
+// script greps for to decide the request succeeded, so a rate limited coingecko
+// costs exactly one extra request instead of three.
+function chartSources(currency, range) {
+  var code = normalizeCurrency(currency);
+  var key = normalizeRange(range);
+  var step = CHART_STEPS[key];
+  var out = [{ source: "coingecko", url: chartUrl(code, key), check: "\"prices\"" }];
+  if (BINANCE_PAIRS[code]) {
+    out.push({
+      source: "binance",
+      url: BINANCE_KLINES_URL + "?symbol=" + BINANCE_PAIRS[code]
+        + "&interval=" + step.binance + "&limit=" + step.points,
+      check: "__HTTP_200__"
+    });
+  }
+  if (KRAKEN_PAIRS[code]) {
+    out.push({
+      source: "kraken",
+      url: KRAKEN_OHLC_URL + "?pair=" + KRAKEN_PAIRS[code] + "&interval=" + step.kraken,
+      // Kraken answers HTTP 200 with a non-empty error array for a bad pair.
+      check: "\"result\""
+    });
+  }
+  if (BITSTAMP_PAIRS[code]) {
+    out.push({
+      source: "bitstamp",
+      url: BITSTAMP_OHLC_URL + BITSTAMP_PAIRS[code] + "/?step=" + step.bitstamp
+        + "&limit=" + step.points,
+      check: "\"ohlc\""
+    });
+  }
+  return out;
+}
+
+function tailSeries(series, limit) {
+  if (!series || series.length <= limit) return series;
+  return series.slice(series.length - limit);
+}
+
+function seriesFromCoingecko(raw) {
+  var parsed = parseCoingeckoChart(raw);
+  return parsed ? parsed.series : null;
+}
+
+// binance klines: [[openTimeMs, open, high, low, close, volume, ...], ...]
+function parseBinanceKlines(raw) {
+  if (!raw || !raw.length) return null;
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var candle = raw[i];
+    if (!candle || candle.length < 5) continue;
+    var ts = Number(candle[0]);
+    var price = Number(candle[4]);
+    if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
+  }
+  return out.length >= 2 ? out : null;
+}
+
+// kraken: {"error":[],"result":{"XXBTZUSD":[[timeSec,open,high,low,close,...]],"last":...}}
+// The result key is the pair's internal name, which differs per pair
+// (XXBTZUSD against XBTCHF), so the first key that is not "last" wins.
+function parseKrakenOhlc(raw) {
+  if (!raw || !raw.result) return null;
+  for (var key in raw.result) {
+    if (key === "last") continue;
+    var rows = raw.result[key];
+    if (!rows || !rows.length) continue;
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (!row || row.length < 5) continue;
+      var ts = Number(row[0]) * 1000;
+      var price = Number(row[4]);
+      if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
+    }
+    if (out.length >= 2) return out;
+  }
+  return null;
+}
+
+// bitstamp: {"data":{"ohlc":[{"timestamp":"...","close":"..."}]}}
+function parseBitstampOhlc(raw) {
+  var rows = raw && raw.data && raw.data.ohlc;
+  if (!rows || !rows.length) return null;
+  var out = [];
+  for (var i = 0; i < rows.length; i++) {
+    var ts = Number(rows[i].timestamp) * 1000;
+    var price = Number(rows[i].close);
+    if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
+  }
+  return out.length >= 2 ? out : null;
+}
+
+// Every mirror reports the close of each candle, which is the same shape
+// coingecko's market_chart returns.
+function fallbackChartSeries(source, range, raw) {
+  var series = null;
+  if (source === "binance") series = parseBinanceKlines(raw);
+  else if (source === "kraken") series = parseKrakenOhlc(raw);
+  else if (source === "bitstamp") series = parseBitstampOhlc(raw);
+  if (!series) return null;
+  var step = CHART_STEPS[normalizeRange(range)];
+  return tailSeries(series, step ? step.points : series.length);
+}
+
 // mempool.space returns whole-unit prices per currency:
 //   {"time":1791286823,"USD":86304,"EUR":76655,...}
 function parseMempoolPrices(raw) {

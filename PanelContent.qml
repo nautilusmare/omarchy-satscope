@@ -45,6 +45,12 @@ Flickable {
     ? down : (etfFlow && etfFlow.total > 0 ? up : fg)
   readonly property string etfDateText: etfFlow && etfFlow.shortDate ? etfFlow.shortDate : ""
 
+  // Coingecko occasionally rate limits the chart endpoint; the widget then
+  // draws candles from an exchange mirror and says so under the "now" label.
+  readonly property string chartSource: (widget && widget.chartSource) ? widget.chartSource : ""
+  readonly property string chartNowText: (chartSource.length === 0 || chartSource === "coingecko")
+    ? "now" : "now · " + chartSource
+
   readonly property var minMax: {
     var s = widget ? widget.chartSeries : []
     var lo = -1, hi = -1
@@ -597,7 +603,7 @@ Flickable {
       Text {
         anchors.right: parent.right
         anchors.top: parent.top
-        text: "now"
+        text: panel.chartNowText
         color: Util.alpha(panel.fg, 0.5)
         font.family: panel.fontFamily
         font.pixelSize: Style.font.caption
