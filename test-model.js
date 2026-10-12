@@ -6,7 +6,7 @@ var Model = {}
 new Function(src + "\n;return this")()
 // Model.js declares functions in the function scope of `new Function`,
 // so re-evaluate with an explicit export object instead.
-Model = new Function(src + "\nreturn {CURRENCIES:CURRENCIES,SYMBOLS:SYMBOLS,MEMPOOL_PRICES_URL:MEMPOOL_PRICES_URL,MEMPOOL_HEIGHT_URL:MEMPOOL_HEIGHT_URL,MEMPOOL_FEES_URL:MEMPOOL_FEES_URL,MEMPOOL_HASHRATE_URL:MEMPOOL_HASHRATE_URL,MEMPOOL_DIFFICULTY_URL:MEMPOOL_DIFFICULTY_URL,FEAR_GREED_URL:FEAR_GREED_URL,KALSHI_EOY_URL:KALSHI_EOY_URL,parseKalshiRange:parseKalshiRange,parseKalshiBucket:parseKalshiBucket,kalshiQuantile:kalshiQuantile,kalshiHorizonLabel:kalshiHorizonLabel,medianPremiumPct:medianPremiumPct,FARSIDE_BTC_URL:FARSIDE_BTC_URL,parseFarsideNumber:parseFarsideNumber,parseFarsideFlows:parseFarsideFlows,formatFlowUsd:formatFlowUsd,BAR_APPEARANCES:BAR_APPEARANCES,normalizeAppearance:normalizeAppearance,RSS_FEEDS:RSS_FEEDS,NEWS_LIMIT:NEWS_LIMIT,NEWS_SHOWN:NEWS_SHOWN,COINGECKO_SIMPLE_URL:COINGECKO_SIMPLE_URL,COINGECKO_CHART_URL:COINGECKO_CHART_URL,currencySymbol:currencySymbol,normalizeCurrency:normalizeCurrency,chartUrl:chartUrl,simplePriceUrl:simplePriceUrl,normalizeRange:normalizeRange,rangeKeyToDays:rangeKeyToDays,parseMempoolPrices:parseMempoolPrices,parseCoingeckoSimple:parseCoingeckoSimple,parseCoingeckoChart:parseCoingeckoChart,parseFees:parseFees,parseBlockHeight:parseBlockHeight,parseGlobalStats:parseGlobalStats,parseHashrate:parseHashrate,parseDifficultyAdjustment:parseDifficultyAdjustment,parseFearGreed:parseFearGreed,parseRss:parseRss,mergeHeadlines:mergeHeadlines,headlineAge:headlineAge,decodeEntities:decodeEntities,stripCdata:stripCdata,headlineRelevance:headlineRelevance,headlineSimilarity:headlineSimilarity,dedupeHeadlines:dedupeHeadlines,selectRelevant:selectRelevant,NEWS_TIER1_WINDOW_HOURS:NEWS_TIER1_WINDOW_HOURS,NEWS_TIER2_WINDOW_HOURS:NEWS_TIER2_WINDOW_HOURS,NEWS_TIER1_SCORE:NEWS_TIER1_SCORE,NEWS_TIER2_SCORE:NEWS_TIER2_SCORE,NEWS_MIN_ITEMS:NEWS_MIN_ITEMS,NEWS_DEDUPE_SIM:NEWS_DEDUPE_SIM,halvingInfo:halvingInfo,mergeQuote:mergeQuote,formatPrice:formatPrice,formatNumber:formatNumber,formatChange:formatChange,formatChangeCompact:formatChangeCompact,formatHashrate:formatHashrate,formatCompact:formatCompact,formatDuration:formatDuration,fearGreedColor:fearGreedColor,UP_COLOR:UP_COLOR,DOWN_COLOR:DOWN_COLOR,FNG_EXTREME_FEAR:FNG_EXTREME_FEAR,FNG_FEAR:FNG_FEAR,FNG_NEUTRAL:FNG_NEUTRAL,FNG_GREED:FNG_GREED,FNG_EXTREME_GREED:FNG_EXTREME_GREED,formatClock:formatClock,formatAge:formatAge,isStale:isStale,downsampleSeries:downsampleSeries,mergeSeriesWithSpot:mergeSeriesWithSpot,sparklineGeometry:sparklineGeometry,sparklinePath:sparklinePath,tooltipText:tooltipText,serializeState:serializeState,parseState:parseState}")()
+Model = new Function(src + "\nreturn {CURRENCIES:CURRENCIES,SYMBOLS:SYMBOLS,MEMPOOL_PRICES_URL:MEMPOOL_PRICES_URL,MEMPOOL_HEIGHT_URL:MEMPOOL_HEIGHT_URL,MEMPOOL_FEES_URL:MEMPOOL_FEES_URL,MEMPOOL_HASHRATE_URL:MEMPOOL_HASHRATE_URL,MEMPOOL_DIFFICULTY_URL:MEMPOOL_DIFFICULTY_URL,FEAR_GREED_URL:FEAR_GREED_URL,KALSHI_EOY_URL:KALSHI_EOY_URL,parseKalshiRange:parseKalshiRange,parseKalshiBucket:parseKalshiBucket,kalshiQuantile:kalshiQuantile,kalshiHorizonLabel:kalshiHorizonLabel,medianPremiumPct:medianPremiumPct,FARSIDE_BTC_URL:FARSIDE_BTC_URL,parseFarsideNumber:parseFarsideNumber,parseFarsideFlows:parseFarsideFlows,formatFlowUsd:formatFlowUsd,BAR_APPEARANCES:BAR_APPEARANCES,normalizeAppearance:normalizeAppearance,RSS_FEEDS:RSS_FEEDS,NEWS_LIMIT:NEWS_LIMIT,NEWS_SHOWN:NEWS_SHOWN,COINGECKO_SIMPLE_URL:COINGECKO_SIMPLE_URL,COINGECKO_CHART_URL:COINGECKO_CHART_URL,currencySymbol:currencySymbol,normalizeCurrency:normalizeCurrency,chartUrl:chartUrl,chartSources:chartSources,fallbackChartSeries:fallbackChartSeries,parseBinanceKlines:parseBinanceKlines,parseKrakenOhlc:parseKrakenOhlc,parseBitstampOhlc:parseBitstampOhlc,seriesFromCoingecko:seriesFromCoingecko,tailSeries:tailSeries,simplePriceUrl:simplePriceUrl,normalizeRange:normalizeRange,rangeKeyToDays:rangeKeyToDays,parseMempoolPrices:parseMempoolPrices,parseCoingeckoSimple:parseCoingeckoSimple,parseCoingeckoChart:parseCoingeckoChart,parseFees:parseFees,parseBlockHeight:parseBlockHeight,parseGlobalStats:parseGlobalStats,parseHashrate:parseHashrate,parseDifficultyAdjustment:parseDifficultyAdjustment,parseFearGreed:parseFearGreed,parseRss:parseRss,mergeHeadlines:mergeHeadlines,headlineAge:headlineAge,decodeEntities:decodeEntities,stripCdata:stripCdata,headlineRelevance:headlineRelevance,headlineSimilarity:headlineSimilarity,dedupeHeadlines:dedupeHeadlines,selectRelevant:selectRelevant,NEWS_TIER1_WINDOW_HOURS:NEWS_TIER1_WINDOW_HOURS,NEWS_TIER2_WINDOW_HOURS:NEWS_TIER2_WINDOW_HOURS,NEWS_TIER1_SCORE:NEWS_TIER1_SCORE,NEWS_TIER2_SCORE:NEWS_TIER2_SCORE,NEWS_MIN_ITEMS:NEWS_MIN_ITEMS,NEWS_DEDUPE_SIM:NEWS_DEDUPE_SIM,halvingInfo:halvingInfo,mergeQuote:mergeQuote,formatPrice:formatPrice,formatNumber:formatNumber,formatChange:formatChange,formatChangeCompact:formatChangeCompact,formatHashrate:formatHashrate,formatCompact:formatCompact,formatDuration:formatDuration,fearGreedColor:fearGreedColor,UP_COLOR:UP_COLOR,DOWN_COLOR:DOWN_COLOR,FNG_EXTREME_FEAR:FNG_EXTREME_FEAR,FNG_FEAR:FNG_FEAR,FNG_NEUTRAL:FNG_NEUTRAL,FNG_GREED:FNG_GREED,FNG_EXTREME_GREED:FNG_EXTREME_GREED,formatClock:formatClock,formatAge:formatAge,isStale:isStale,downsampleSeries:downsampleSeries,mergeSeriesWithSpot:mergeSeriesWithSpot,sparklineGeometry:sparklineGeometry,sparklinePath:sparklinePath,tooltipText:tooltipText,serializeState:serializeState,parseState:parseState}")()
 
 var failures = 0
 function check(name, cond, extra) {
@@ -41,6 +41,46 @@ check("chartUrl 7d", Model.chartUrl("USD", "7d").indexOf("days=7") !== -1)
 check("chartUrl 1y interval", Model.chartUrl("EUR", "1y").indexOf("days=365&interval=daily") !== -1)
 check("chartUrl 30d interval", Model.chartUrl("USD", "30d").indexOf("interval=daily") !== -1)
 check("chartUrl 24h no interval", Model.chartUrl("USD", "24h").indexOf("interval") === -1)
+
+// --- chart fallback sources
+var cg = Model.chartSources("USD", "1y")
+check("chartSources coingecko first", cg[0].source === "coingecko" && cg[0].url.indexOf("days=365") !== -1)
+check("chartSources binance mirrored", cg[1].source === "binance" && cg[1].url.indexOf("BTCUSDT") !== -1 && cg[1].url.indexOf("interval=1d") !== -1)
+check("chartSources kraken mirrored", cg[2].source === "kraken" && cg[2].url.indexOf("XBTUSD") !== -1 && cg[2].url.indexOf("interval=1440") !== -1)
+check("chartSources bitstamp mirrored", cg[3].source === "bitstamp" && cg[3].url.indexOf("btcusd") !== -1)
+check("chartSources gates stop the script early", cg[0].check === '"prices"' && cg[1].check === "__HTTP_200__" && cg[2].check === '"result"' && cg[3].check === '"ohlc"')
+var chf = Model.chartSources("CHF", "24h")
+check("chartSources chf uses kraken only", chf.length === 2 && chf[1].source === "kraken" && chf[1].url.indexOf("XBTCHF") !== -1 && chf[1].url.indexOf("interval=5") !== -1)
+check("chartSources cad skips binance/bitstamp", (function() {
+  var s = Model.chartSources("CAD", "30d")
+  return s.length === 2 && s[1].source === "kraken" && s[1].url.indexOf("XBTCAD") !== -1
+})())
+check("chartSources unknown range falls back to 24h steps", (function() {
+  var s = Model.chartSources("USD", "nope")
+  return s[0].url.indexOf("days=1") !== -1 && s[1].url.indexOf("interval=5m") !== -1
+})())
+
+var klines = Model.parseBinanceKlines([[1000, "1", "2", "0.5", "1.5", "9"], [2000, "1", "2", "0.5", "1.7", "9"], ["x"]])
+check("parseBinanceKlines uses close", klines && klines.length === 2 && klines[1].price === 1.7 && klines[0].ts === 1000)
+check("parseBinanceKlines junk", Model.parseBinanceKlines([]) === null && Model.parseBinanceKlines("x") === null)
+
+var kraken = Model.parseKrakenOhlc({ error: [], result: { XXBTZUSD: [[1700000000, "1", "2", "0.5", "1.5", "1", "1", 1], [1700086400, "1", "2", "0.5", "1.9", "1", "1", 1]], last: 1700000000 } })
+check("parseKrakenOhlc seconds to ms", kraken && kraken.length === 2 && kraken[0].ts === 1700000000000 && kraken[1].price === 1.9)
+check("parseKrakenOhlc junk", Model.parseKrakenOhlc(null) === null && Model.parseKrakenOhlc({ error: [] }) === null && Model.parseKrakenOhlc({ result: { last: 1 } }) === null)
+
+var bitstamp = Model.parseBitstampOhlc({ data: { ohlc: [{ timestamp: "1700000000", close: "2.5" }, { timestamp: "1700086400", close: "3" }] } })
+check("parseBitstampOhlc ok", bitstamp && bitstamp.length === 2 && bitstamp[0].ts === 1700000000000 && bitstamp[1].price === 3)
+check("parseBitstampOhlc junk", Model.parseBitstampOhlc({}) === null)
+
+var longSeries = []
+for (var k = 0; k < 900; k++) longSeries.push({ ts: k * 1000, price: k + 1 })
+var trimmed = Model.fallbackChartSeries("kraken", "24h", { result: { XXBTZUSD: longSeries.map(function(p) { return [p.ts / 1000, "0", "0", "0", String(p.price), "0", "0", 1] }) } })
+check("fallbackChartSeries trims to range points", trimmed && trimmed.length === 288 && trimmed[287].price === 900)
+check("fallbackChartSeries unknown source", Model.fallbackChartSeries("nope", "24h", {}) === null)
+check("seriesFromCoingecko wraps parse", (function() {
+  var s = Model.seriesFromCoingecko({ prices: [[1, 2], [2, 3]] })
+  return s && s.length === 2 && Model.seriesFromCoingecko({ status: { error_code: 429 } }) === null
+})())
 
 // --- parsers
 var mempool = Model.parseMempoolPrices({ time: 1791286823, USD: 86304, EUR: 76655 })
