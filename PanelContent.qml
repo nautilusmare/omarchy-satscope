@@ -45,6 +45,12 @@ Flickable {
     ? down : (etfFlow && etfFlow.total > 0 ? up : fg)
   readonly property string etfDateText: etfFlow && etfFlow.shortDate ? etfFlow.shortDate : ""
 
+  readonly property string chartNowText: {
+    if (!widget || !widget.chartMatches) return ""
+    var label = widget.chartStale ? "stale" : "now"
+    return widget.chartSource === "coingecko" ? label : label + " · " + widget.chartSource
+  }
+
   readonly property var minMax: {
     var s = widget ? widget.chartSeries : []
     var lo = -1, hi = -1
@@ -580,7 +586,7 @@ Flickable {
       Text {
         visible: !widget || widget.chartSeries.length < 2
         anchors.centerIn: parent
-        text: "No chart data"
+        text: widget ? "No " + widget.chartRange + " chart data" : "No chart data"
         color: Util.alpha(panel.fg, 0.4)
         font.family: panel.fontFamily
         font.pixelSize: Style.font.bodySmall
@@ -597,7 +603,7 @@ Flickable {
       Text {
         anchors.right: parent.right
         anchors.top: parent.top
-        text: "now"
+        text: panel.chartNowText
         color: Util.alpha(panel.fg, 0.5)
         font.family: panel.fontFamily
         font.pixelSize: Style.font.caption

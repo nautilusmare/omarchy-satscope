@@ -17,7 +17,12 @@ Panel {
 
   property double spot: 0
   property double changePct: NaN
-  property var chartSeries: []
+  property var chartData: null
+  readonly property bool chartMatches: chartData !== null
+    && chartData.currency === currency && chartData.range === chartRange
+  readonly property var chartSeries: chartMatches ? chartData.series : []
+  readonly property string chartSource: chartMatches ? chartData.source : ""
+  property bool chartStale: false
   property double fetchedAt: 0
   property double lastGlobalAt: 0
   property bool stale: false
@@ -56,9 +61,12 @@ Panel {
   property bool aInFlight: false
   property bool bInFlight: false
   property bool cInFlight: false
+  property var chartProviders: []
+  property int chartProviderIndex: 0
   property bool dInFlight: false
-  property int bCooldownUntil: 0
-  property int cCooldownUntil: 0
+  // Wall-clock deadlines: QML int is 32-bit, so Date.now() + 5min overflows it.
+  property double bCooldownUntil: 0
+  property double cCooldownUntil: 0
   property int laneAPending: 0
   property int laneDPending: 0
   property string chartReqRange: ""
@@ -290,41 +298,45 @@ Panel {
   }
 
   function laneCStart(force) {
-    if (cInFlight) return
-    if (!force && Date.now() < cCooldownUntil) return
+    if (cInFlight || (!force && Date.now() < cCooldownUntil)) return
     cInFlight = true
     chartReqRange = chartRange
     chartReqCurrency = currency
-    fetchChart.command = curlCmd(Model.chartUrl(currency, chartRange), true)
+    chartProviders = Model.chartSources(currency, chartRange)
+    chartProviderIndex = 0
+    startChartProvider()
+  }
+
+  function startChartProvider() {
+    chartRaw = ""
+    fetchChart.command = curlCmd(chartProviders[chartProviderIndex].url, true)
     fetchChart.running = true
   }
 
-  function onChartDone() {
-    cInFlight = false
+  // Runs after Process has exited. Keep the lane busy until this decision so
+  // rapid selection changes coalesce to the selection currently on screen.
+  function onChartDone(exitCode) {
     if (chartReqRange !== chartRange || chartReqCurrency !== currency) {
-      if (stateReady) saveState()
+      cInFlight = false
+      laneCStart(true)
       return
     }
-    var r = splitStatus(chartRaw)
-    chartRaw = ""
-    if (r.status === 429) {
-      cCooldownUntil = Date.now() + 300000
-      if (stateReady) saveState()
+    var source = chartProviders[chartProviderIndex].source
+    var now = Date.now()
+    var series = Model.chartResponse(source, chartRange, chartRaw, exitCode, now)
+    if (series) {
+      chartData = { currency: currency, range: chartRange, source: source,
+                    fetchedAt: now, series: Model.downsampleSeries(series, 160) }
+      chartStale = false
+      cCooldownUntil = 0
+    } else if (++chartProviderIndex < chartProviders.length) {
+      startChartProvider()
       return
-    }
-    var parsed = Model.parseCoingeckoChart(parseJson(r.body))
-    var fallback = []
-    if (!parsed || !parsed.series || parsed.series.length < 2) {
-      fallback = Model.downsampleSeries(
-        Model.mergeSeriesWithSpot(chartSeries, spot, Math.floor(Date.now() / 1000)), 160)
     } else {
-      fallback = Model.downsampleSeries(parsed.series, 160)
+      chartStale = true
+      cCooldownUntil = now + 300000
     }
-    if (fallback.length < 2 && spot > 0) {
-      fallback = Model.downsampleSeries(
-        Model.mergeSeriesWithSpot(chartSeries, spot, Math.floor(Date.now() / 1000)), 160)
-    }
-    chartSeries = fallback
+    cInFlight = false
     if (stateReady) saveState()
   }
 
@@ -489,7 +501,10 @@ function forceRefresh() {
     var payload = {
       version: 2,
       currency: currency,
-      chartRange: chartRange,
+      chartRange: chartMatches ? chartData.range : "",
+      chartCurrency: chartMatches ? chartData.currency : "",
+      chartSource: chartSource,
+      chartFetchedAt: chartMatches ? chartData.fetchedAt : 0,
       ts: fetchedAt,
       spot: spot,
       changePct: isFinite(changePct) ? changePct : null,
@@ -515,19 +530,18 @@ function forceRefresh() {
     if (!parsed) return
     var code = currency
     var price = parsed.prices[code]
-    if (!isFinite(price) || price <= 0) {
-      for (var key in parsed.prices) {
-        if (parsed.prices.hasOwnProperty(key) && parsed.prices[key] > 0) {
-          price = parsed.prices[key]
-          break
-        }
-      }
+    if (isFinite(price) && price > 0) {
+      spot = price
+      fetchedAt = parsed.ts > 0 ? parsed.ts : 0
+      changePct = isFinite(parsed.changes[code]) ? parsed.changes[code] : NaN
     }
-    if (!isFinite(price) || price <= 0) return
-    spot = price
-    fetchedAt = parsed.ts > 0 ? parsed.ts : 0
-    changePct = isFinite(parsed.changes[code]) ? parsed.changes[code] : NaN
-    chartSeries = Model.downsampleSeries(parsed.series, 160)
+    // Older caches lack reliable chart provenance. Keep their other fields.
+    if (!chartData && parsed.chartCurrency === currency && parsed.chartRange === chartRange
+        && parsed.chartFetchedAt > 0 && parsed.chartSource && parsed.series.length >= 2) {
+      chartData = { currency: currency, range: chartRange, source: parsed.chartSource,
+                    fetchedAt: parsed.chartFetchedAt, series: Model.downsampleSeries(parsed.series, 160) }
+      chartStale = true
+    }
     stateFees = parsed.fees || stateFees
     blockHeight = parsed.blockHeight || 0
     hashrate = parsed.hashrate || 0
@@ -621,7 +635,6 @@ function forceRefresh() {
   }
 
   onCurrencyChanged: {
-    chartSeries = []
     spot = 0
     changePct = NaN
     stale = false
@@ -721,7 +734,7 @@ function forceRefresh() {
       waitForEnd: true
       onStreamFinished: root.chartRaw = String(text || "")
     }
-    onExited: root.onChartDone()
+    onExited: (exitCode) => Qt.callLater(root.onChartDone, exitCode)
   }
 
   // Lane D: hashrate + difficulty adjustment + fear & greed (every 15 min).

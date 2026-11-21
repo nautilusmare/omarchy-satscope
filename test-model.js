@@ -6,7 +6,7 @@ var Model = {}
 new Function(src + "\n;return this")()
 // Model.js declares functions in the function scope of `new Function`,
 // so re-evaluate with an explicit export object instead.
-Model = new Function(src + "\nreturn {CURRENCIES:CURRENCIES,SYMBOLS:SYMBOLS,MEMPOOL_PRICES_URL:MEMPOOL_PRICES_URL,MEMPOOL_HEIGHT_URL:MEMPOOL_HEIGHT_URL,MEMPOOL_FEES_URL:MEMPOOL_FEES_URL,MEMPOOL_HASHRATE_URL:MEMPOOL_HASHRATE_URL,MEMPOOL_DIFFICULTY_URL:MEMPOOL_DIFFICULTY_URL,FEAR_GREED_URL:FEAR_GREED_URL,KALSHI_EOY_URL:KALSHI_EOY_URL,parseKalshiRange:parseKalshiRange,parseKalshiBucket:parseKalshiBucket,kalshiQuantile:kalshiQuantile,kalshiHorizonLabel:kalshiHorizonLabel,medianPremiumPct:medianPremiumPct,FARSIDE_BTC_URL:FARSIDE_BTC_URL,parseFarsideNumber:parseFarsideNumber,parseFarsideFlows:parseFarsideFlows,formatFlowUsd:formatFlowUsd,BAR_APPEARANCES:BAR_APPEARANCES,normalizeAppearance:normalizeAppearance,RSS_FEEDS:RSS_FEEDS,NEWS_LIMIT:NEWS_LIMIT,NEWS_SHOWN:NEWS_SHOWN,COINGECKO_SIMPLE_URL:COINGECKO_SIMPLE_URL,COINGECKO_CHART_URL:COINGECKO_CHART_URL,currencySymbol:currencySymbol,normalizeCurrency:normalizeCurrency,chartUrl:chartUrl,simplePriceUrl:simplePriceUrl,normalizeRange:normalizeRange,rangeKeyToDays:rangeKeyToDays,parseMempoolPrices:parseMempoolPrices,parseCoingeckoSimple:parseCoingeckoSimple,parseCoingeckoChart:parseCoingeckoChart,parseFees:parseFees,parseBlockHeight:parseBlockHeight,parseGlobalStats:parseGlobalStats,parseHashrate:parseHashrate,parseDifficultyAdjustment:parseDifficultyAdjustment,parseFearGreed:parseFearGreed,parseRss:parseRss,mergeHeadlines:mergeHeadlines,headlineAge:headlineAge,decodeEntities:decodeEntities,stripCdata:stripCdata,headlineRelevance:headlineRelevance,headlineSimilarity:headlineSimilarity,dedupeHeadlines:dedupeHeadlines,selectRelevant:selectRelevant,NEWS_TIER1_WINDOW_HOURS:NEWS_TIER1_WINDOW_HOURS,NEWS_TIER2_WINDOW_HOURS:NEWS_TIER2_WINDOW_HOURS,NEWS_TIER1_SCORE:NEWS_TIER1_SCORE,NEWS_TIER2_SCORE:NEWS_TIER2_SCORE,NEWS_MIN_ITEMS:NEWS_MIN_ITEMS,NEWS_DEDUPE_SIM:NEWS_DEDUPE_SIM,halvingInfo:halvingInfo,mergeQuote:mergeQuote,formatPrice:formatPrice,formatNumber:formatNumber,formatChange:formatChange,formatChangeCompact:formatChangeCompact,formatHashrate:formatHashrate,formatCompact:formatCompact,formatDuration:formatDuration,fearGreedColor:fearGreedColor,UP_COLOR:UP_COLOR,DOWN_COLOR:DOWN_COLOR,FNG_EXTREME_FEAR:FNG_EXTREME_FEAR,FNG_FEAR:FNG_FEAR,FNG_NEUTRAL:FNG_NEUTRAL,FNG_GREED:FNG_GREED,FNG_EXTREME_GREED:FNG_EXTREME_GREED,formatClock:formatClock,formatAge:formatAge,isStale:isStale,downsampleSeries:downsampleSeries,mergeSeriesWithSpot:mergeSeriesWithSpot,sparklineGeometry:sparklineGeometry,sparklinePath:sparklinePath,tooltipText:tooltipText,serializeState:serializeState,parseState:parseState}")()
+Model = new Function(src + "\nreturn {CURRENCIES:CURRENCIES,SYMBOLS:SYMBOLS,MEMPOOL_PRICES_URL:MEMPOOL_PRICES_URL,MEMPOOL_HEIGHT_URL:MEMPOOL_HEIGHT_URL,MEMPOOL_FEES_URL:MEMPOOL_FEES_URL,MEMPOOL_HASHRATE_URL:MEMPOOL_HASHRATE_URL,MEMPOOL_DIFFICULTY_URL:MEMPOOL_DIFFICULTY_URL,FEAR_GREED_URL:FEAR_GREED_URL,KALSHI_EOY_URL:KALSHI_EOY_URL,parseKalshiRange:parseKalshiRange,parseKalshiBucket:parseKalshiBucket,kalshiQuantile:kalshiQuantile,kalshiHorizonLabel:kalshiHorizonLabel,medianPremiumPct:medianPremiumPct,FARSIDE_BTC_URL:FARSIDE_BTC_URL,parseFarsideNumber:parseFarsideNumber,parseFarsideFlows:parseFarsideFlows,formatFlowUsd:formatFlowUsd,BAR_APPEARANCES:BAR_APPEARANCES,normalizeAppearance:normalizeAppearance,RSS_FEEDS:RSS_FEEDS,NEWS_LIMIT:NEWS_LIMIT,NEWS_SHOWN:NEWS_SHOWN,COINGECKO_SIMPLE_URL:COINGECKO_SIMPLE_URL,COINGECKO_CHART_URL:COINGECKO_CHART_URL,currencySymbol:currencySymbol,normalizeCurrency:normalizeCurrency,chartUrl:chartUrl,chartSources:chartSources,chartResponse:chartResponse,simplePriceUrl:simplePriceUrl,normalizeRange:normalizeRange,rangeKeyToDays:rangeKeyToDays,parseMempoolPrices:parseMempoolPrices,parseCoingeckoSimple:parseCoingeckoSimple,parseCoingeckoChart:parseCoingeckoChart,parseFees:parseFees,parseBlockHeight:parseBlockHeight,parseGlobalStats:parseGlobalStats,parseHashrate:parseHashrate,parseDifficultyAdjustment:parseDifficultyAdjustment,parseFearGreed:parseFearGreed,parseRss:parseRss,mergeHeadlines:mergeHeadlines,headlineAge:headlineAge,decodeEntities:decodeEntities,stripCdata:stripCdata,headlineRelevance:headlineRelevance,headlineSimilarity:headlineSimilarity,dedupeHeadlines:dedupeHeadlines,selectRelevant:selectRelevant,NEWS_TIER1_WINDOW_HOURS:NEWS_TIER1_WINDOW_HOURS,NEWS_TIER2_WINDOW_HOURS:NEWS_TIER2_WINDOW_HOURS,NEWS_TIER1_SCORE:NEWS_TIER1_SCORE,NEWS_TIER2_SCORE:NEWS_TIER2_SCORE,NEWS_MIN_ITEMS:NEWS_MIN_ITEMS,NEWS_DEDUPE_SIM:NEWS_DEDUPE_SIM,halvingInfo:halvingInfo,mergeQuote:mergeQuote,formatPrice:formatPrice,formatNumber:formatNumber,formatChange:formatChange,formatChangeCompact:formatChangeCompact,formatHashrate:formatHashrate,formatCompact:formatCompact,formatDuration:formatDuration,fearGreedColor:fearGreedColor,UP_COLOR:UP_COLOR,DOWN_COLOR:DOWN_COLOR,FNG_EXTREME_FEAR:FNG_EXTREME_FEAR,FNG_FEAR:FNG_FEAR,FNG_NEUTRAL:FNG_NEUTRAL,FNG_GREED:FNG_GREED,FNG_EXTREME_GREED:FNG_EXTREME_GREED,formatClock:formatClock,formatAge:formatAge,isStale:isStale,downsampleSeries:downsampleSeries,mergeSeriesWithSpot:mergeSeriesWithSpot,sparklineGeometry:sparklineGeometry,sparklinePath:sparklinePath,tooltipText:tooltipText,serializeState:serializeState,parseState:parseState}")()
 
 var failures = 0
 function check(name, cond, extra) {
@@ -41,6 +41,106 @@ check("chartUrl 7d", Model.chartUrl("USD", "7d").indexOf("days=7") !== -1)
 check("chartUrl 1y interval", Model.chartUrl("EUR", "1y").indexOf("days=365&interval=daily") !== -1)
 check("chartUrl 30d interval", Model.chartUrl("USD", "30d").indexOf("interval=daily") !== -1)
 check("chartUrl 24h no interval", Model.chartUrl("USD", "24h").indexOf("interval") === -1)
+
+// --- chart fallback sources and lane transitions
+var usdSources = Model.chartSources("USD", "1y")
+check("USD mirrors use fiat pairs", usdSources.map(s => s.source).join() === "coingecko,kraken,bitstamp"
+  && usdSources[1].url.includes("XBTUSD") && usdSources[2].url.includes("btcusd"))
+for (var code of ["CHF", "CAD"]) {
+  var sources = Model.chartSources(code, "24h")
+  check(code + " uses Kraken 5m", sources.length === 2 && sources[1].url.endsWith("XBT" + code + "&interval=5"))
+}
+for (var code of ["EUR", "GBP", "AUD", "JPY"]) {
+  check(code + " uses matching Binance pair", Model.chartSources(code, "7d")[1].url.includes("BTC" + code + "&interval=1h"))
+}
+var daily = Model.chartSources("EUR", "30d")
+check("30d daily resolution across sources", daily[0].url.includes("interval=daily")
+  && daily[1].url.includes("interval=1d") && daily[2].url.includes("interval=1440") && daily[3].url.includes("step=86400"))
+
+var now = Date.UTC(2026, 0, 1, 12, 2)
+var step = 300000
+var start = Math.floor(now / step) * step
+var rows = Array.from({length: 288}, (_, i) => [(start - (287-i)*step)/1000, "1", "2", "1", "1.5"])
+var krakenBody = { error: [], result: { last: 1, XXBTZEUR: rows } }
+function response(body, status = 200) { return JSON.stringify(body) + "\n__HTTP_" + status + "__" }
+function parseChart(source, data) { return Model.chartResponse(source, "24h", response(data), 0, now) }
+var kraken = parseChart("kraken", krakenBody)
+check("Kraken seconds and close", kraken && kraken[0].ts === rows[0][0]*1000+step-1 && kraken[0].price === 1.5)
+var bitstampRows = rows.map(r => ({timestamp:String(r[0]),close:r[4]}))
+var bitstamp = parseChart("bitstamp", {data:{ohlc:[null,{timestamp:null,close:1}].concat(bitstampRows)}})
+check("Bitstamp ignores malformed rows", bitstamp && bitstamp.length === 288)
+var binance = rows.map(r => [r[0]*1000,1,2,1,r[4],1,r[0]*1000+step-1])
+var candles = parseChart("binance", binance)
+check("Binance uses close time and caps current candle", candles && candles[0].ts === binance[0][6]
+  && candles[287].ts === Math.min(now,binance[287][6]))
+check("stale, short and unordered history rejected",
+  !parseChart("binance", binance.slice(0,2)) && !parseChart("binance", binance.slice().reverse())
+  && !Model.chartResponse("kraken","24h",response(krakenBody),0,now+86400000))
+check("Kraken error array rejects even populated result", !parseChart("kraken",{error:["bad pair"],result:krakenBody.result}))
+check("curl failure and missing HTTP trailer rejected", !Model.chartResponse("kraken","24h",response(krakenBody),18,now)
+  && !Model.chartResponse("kraken","24h",JSON.stringify(krakenBody),0,now))
+
+// Run the widget's actual lane and persistence handlers with a stub Process.
+var vm = require("vm")
+var qml = fs.readFileSync(path.join(__dirname, "BarWidget.qml"), "utf8")
+var writes = []
+var lane = vm.createContext({Model, Date:{now:() => now}, currency:"EUR", chartRange:"24h", chartData:null, cInFlight:false,
+  cCooldownUntil:0, fetchChart:{}, stateReady:true, hasQuote:true, spot:1, fetchedAt:1,
+  changePct:0, stateFees:null, blockHeight:0, hashrate:0, difficultyChange:0, difficultyProgress:0,
+  difficultyTimeAvgMs:0, fngValue:0, fngClassification:"", headlines:[], etfFlow:null, sourcesText:"",
+  stateFile:{setText:text => writes.push(JSON.parse(text))}})
+for (var name of ["curlCmd","startChartProvider","laneCStart","onChartDone","saveState","loadState"]) {
+  var match = qml.match(new RegExp("  function " + name + "\\([^]*?\\n  }"))
+  vm.runInContext(match[0],lane)
+}
+for (let prop of ["chartMatches","chartSeries","chartSource"]) {
+  let expr = qml.match(new RegExp("readonly property \\w+ " + prop + ": ([^]*?)(?=\\n  \\w)"))[1]
+  Object.defineProperty(lane,prop,{get:() => vm.runInContext(expr,lane)})
+}
+function finish(body,status) {
+  lane.chartRaw = response(body,status)
+  lane.onChartDone(0)
+}
+lane.laneCStart(true)
+finish({prices:[]},200)
+check("empty 200 advances to Binance", lane.chartProviders[lane.chartProviderIndex].source === "binance")
+finish([],200)
+check("empty Binance advances to Kraken",lane.chartProviders[lane.chartProviderIndex].source === "kraken")
+finish(krakenBody,200)
+check("valid Kraken commits without requesting Bitstamp",!lane.cInFlight && lane.chartSource === "kraken"
+  && writes.at(-1).chartSource === "kraken" && writes.at(-1).series.length === 160)
+var saved = writes.at(-1)
+lane.laneCStart(true)
+lane.chartRange = "7d"
+lane.laneCStart(true)
+lane.chartRange = "24h"
+lane.laneCStart(true)
+finish({prices:rows.map(r => [r[0]*1000,r[4]])},200)
+check("A-B-A commits A without another request", !lane.cInFlight && lane.chartSource === "coingecko")
+lane.laneCStart(true)
+lane.chartRange = "7d"
+lane.laneCStart(true)
+lane.chartRange = "1y"
+lane.laneCStart(true)
+finish({},429)
+check("A-B-C starts only latest selection", lane.chartReqRange === "1y" && lane.chartProviderIndex === 0)
+for (var i = 0; i < 4; i++) finish({prices:[]},503)
+check("total failure on new range hides old history and persists no wrong series",
+  lane.chartSeries.length === 0 && writes.at(-1).series.length === 0 && lane.chartStale && lane.cCooldownUntil > now)
+lane.chartData = null
+lane.hasQuote = false
+lane.refreshSec = 60
+lane.loadState(JSON.stringify(saved))
+check("mismatched disk cache stays hidden", !lane.chartMatches)
+lane.chartRange = "24h"
+lane.loadState(JSON.stringify(saved))
+check("matching disk cache restores source and stale status",lane.chartSource === "kraken" && lane.chartStale)
+lane.hasQuote = true
+lane.laneCStart(true)
+for (var i = 0; i < 4; i++) finish({},503)
+check("same-range failure preserves original samples and fetch time",
+  JSON.stringify(writes.at(-1).series) === JSON.stringify(saved.series)
+  && writes.at(-1).chartFetchedAt === saved.chartFetchedAt && lane.chartStale && lane.cCooldownUntil > now)
 
 // --- parsers
 var mempool = Model.parseMempoolPrices({ time: 1791286823, USD: 86304, EUR: 76655 })
