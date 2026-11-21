@@ -17,8 +17,12 @@ Panel {
 
   property double spot: 0
   property double changePct: NaN
-  property var chartSeries: []
-  property string chartSource: "coingecko"
+  property var chartData: null
+  readonly property bool chartMatches: chartData !== null
+    && chartData.currency === currency && chartData.range === chartRange
+  readonly property var chartSeries: chartMatches ? chartData.series : []
+  readonly property string chartSource: chartMatches ? chartData.source : ""
+  property bool chartStale: false
   property double fetchedAt: 0
   property double lastGlobalAt: 0
   property bool stale: false
@@ -57,7 +61,8 @@ Panel {
   property bool aInFlight: false
   property bool bInFlight: false
   property bool cInFlight: false
-  property bool cPending: false
+  property var chartProviders: []
+  property int chartProviderIndex: 0
   property bool dInFlight: false
   // Wall-clock deadlines: QML int is 32-bit, so Date.now() + 5min overflows it.
   property double bCooldownUntil: 0
@@ -292,110 +297,47 @@ Panel {
     if (stateReady) saveState()
   }
 
-  // One shell script for the whole lane: coingecko first, then the keyless
-  // exchange mirrors. Each request is wrapped in a "@@SRC:<source>@@" sentinel
-  // so the JS side can tell the blocks apart, and the script stops early as
-  // soon as a body carries candles. A 429 answers with a JSON error object, so
-  // without this fallback the panel kept drawing the previous range's chart and
-  // looked frozen until the rate limit window passed.
-  function chartScript() {
-    var sources = Model.chartSources(currency, chartRange)
-    var lines = []
-    for (var i = 0; i < sources.length; i++) {
-      lines.push("printf '@@SRC:" + sources[i].source + "@@\\n'")
-      lines.push("body=$(curl -s --max-time 8 -w '\\n__HTTP_%{http_code}__' '" + sources[i].url + "')")
-      lines.push("printf '%s\\n' \"$body\"")
-      lines.push("if printf '%s' \"$body\" | grep -q '" + sources[i].check + "'; then exit 0; fi")
-    }
-    return lines.join("\n")
-  }
-
-  function chartBlocks(raw) {
-    var out = []
-    var chunks = String(raw || "").split("@@SRC:")
-    for (var i = 0; i < chunks.length; i++) {
-      var end = chunks[i].indexOf("@@")
-      if (end === -1) continue
-      out.push({ source: chunks[i].slice(0, end), body: chunks[i].slice(end + 2) })
-    }
-    return out
-  }
-
   function laneCStart(force) {
-    if (cInFlight) {
-      // A range switch must never be dropped. The request in flight belongs to
-      // the range the user just left, so its result is thrown away on arrival;
-      // returning here without a note used to leave the chart on the old range
-      // until the ten minute timer came round.
-      if (chartReqRange !== chartRange || chartReqCurrency !== currency) cPending = true
-      return
-    }
-    if (!force && Date.now() < cCooldownUntil) return
-    cPending = false
+    if (cInFlight || (!force && Date.now() < cCooldownUntil)) return
     cInFlight = true
     chartReqRange = chartRange
     chartReqCurrency = currency
-    fetchChart.command = ["bash", "-lc", chartScript()]
+    chartProviders = Model.chartSources(currency, chartRange)
+    chartProviderIndex = 0
+    startChartProvider()
+  }
+
+  function startChartProvider() {
+    chartRaw = ""
+    fetchChart.command = curlCmd(chartProviders[chartProviderIndex].url, true)
     fetchChart.running = true
   }
 
-  // Serves a range or currency switch that landed while a request was running.
-  // Deferred because the fetch process is still exiting when this is called.
-  function laneCRestartIfPending() {
-    if (!cPending) return
-    cPending = false
-    Qt.callLater(function() { root.laneCStart(true) })
-  }
-
-  function onChartDone() {
-    cInFlight = false
-    var raw = chartRaw
-    chartRaw = ""
+  // Runs after Process has exited. Keep the lane busy until this decision so
+  // rapid selection changes coalesce to the selection currently on screen.
+  function onChartDone(exitCode) {
     if (chartReqRange !== chartRange || chartReqCurrency !== currency) {
-      if (stateReady) saveState()
-      laneCRestartIfPending()
+      cInFlight = false
+      laneCStart(true)
       return
     }
-    var blocks = chartBlocks(raw)
-    var fresh = []
-    var source = ""
-    for (var i = 0; i < blocks.length; i++) {
-      var r = splitStatus(blocks[i].body)
-      // A mirror that was never needed (or was blocked) is skipped, not fatal.
-      if (r.status !== 200) continue
-      var series = blocks[i].source === "coingecko"
-        ? Model.seriesFromCoingecko(parseJson(r.body))
-        : Model.fallbackChartSeries(blocks[i].source, chartReqRange, parseJson(r.body))
-      if (!series || series.length < 2) continue
-      fresh = series
-      source = blocks[i].source
-      break
-    }
-    if (fresh.length < 2 && spot > 0) {
-      // No source answered. Fall back to the chart already on screen with the
-      // live spot appended, so the line still ends at the current price.
-      fresh = Model.mergeSeriesWithSpot(chartSeries, spot, Math.floor(Date.now() / 1000))
-      if (fresh.length >= 2) {
-        chartSeries = Model.downsampleSeries(fresh, 160)
-        if (stateReady) saveState()
-        laneCRestartIfPending()
-        return
-      }
-    }
-    if (fresh.length < 2) {
-      // Nothing usable from any source: stop asking for five minutes rather
-      // than hammering the APIs. A switch that is still waiting is let through
-      // anyway, because laneCRestartIfPending forces the next request.
-      cCooldownUntil = Date.now() + 300000
-      if (stateReady) saveState()
-      laneCRestartIfPending()
+    var source = chartProviders[chartProviderIndex].source
+    var now = Date.now()
+    var series = Model.chartResponse(source, chartRange, chartRaw, exitCode, now)
+    if (series) {
+      chartData = { currency: currency, range: chartRange, source: source,
+                    fetchedAt: now, series: Model.downsampleSeries(series, 160) }
+      chartStale = false
+      cCooldownUntil = 0
+    } else if (++chartProviderIndex < chartProviders.length) {
+      startChartProvider()
       return
+    } else {
+      chartStale = true
+      cCooldownUntil = now + 300000
     }
-    chartSeries = Model.downsampleSeries(fresh, 160)
-    chartSource = source
-    cCooldownUntil = 0
+    cInFlight = false
     if (stateReady) saveState()
-    laneCRestartIfPending()
   }
 
   function laneDStart() {
@@ -559,7 +501,10 @@ function forceRefresh() {
     var payload = {
       version: 2,
       currency: currency,
-      chartRange: chartRange,
+      chartRange: chartMatches ? chartData.range : "",
+      chartCurrency: chartMatches ? chartData.currency : "",
+      chartSource: chartSource,
+      chartFetchedAt: chartMatches ? chartData.fetchedAt : 0,
       ts: fetchedAt,
       spot: spot,
       changePct: isFinite(changePct) ? changePct : null,
@@ -585,19 +530,18 @@ function forceRefresh() {
     if (!parsed) return
     var code = currency
     var price = parsed.prices[code]
-    if (!isFinite(price) || price <= 0) {
-      for (var key in parsed.prices) {
-        if (parsed.prices.hasOwnProperty(key) && parsed.prices[key] > 0) {
-          price = parsed.prices[key]
-          break
-        }
-      }
+    if (isFinite(price) && price > 0) {
+      spot = price
+      fetchedAt = parsed.ts > 0 ? parsed.ts : 0
+      changePct = isFinite(parsed.changes[code]) ? parsed.changes[code] : NaN
     }
-    if (!isFinite(price) || price <= 0) return
-    spot = price
-    fetchedAt = parsed.ts > 0 ? parsed.ts : 0
-    changePct = isFinite(parsed.changes[code]) ? parsed.changes[code] : NaN
-    chartSeries = Model.downsampleSeries(parsed.series, 160)
+    // Older caches lack reliable chart provenance. Keep their other fields.
+    if (!chartData && parsed.chartCurrency === currency && parsed.chartRange === chartRange
+        && parsed.chartFetchedAt > 0 && parsed.chartSource && parsed.series.length >= 2) {
+      chartData = { currency: currency, range: chartRange, source: parsed.chartSource,
+                    fetchedAt: parsed.chartFetchedAt, series: Model.downsampleSeries(parsed.series, 160) }
+      chartStale = true
+    }
     stateFees = parsed.fees || stateFees
     blockHeight = parsed.blockHeight || 0
     hashrate = parsed.hashrate || 0
@@ -691,7 +635,6 @@ function forceRefresh() {
   }
 
   onCurrencyChanged: {
-    chartSeries = []
     spot = 0
     changePct = NaN
     stale = false
@@ -791,7 +734,7 @@ function forceRefresh() {
       waitForEnd: true
       onStreamFinished: root.chartRaw = String(text || "")
     }
-    onExited: root.onChartDone()
+    onExited: (exitCode) => Qt.callLater(root.onChartDone, exitCode)
   }
 
   // Lane D: hashrate + difficulty adjustment + fear & greed (every 15 min).

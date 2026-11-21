@@ -127,135 +127,124 @@ function chartUrl(currency, range) {
     .replace("days=1", "days=" + days) + interval;
 }
 
-// coingecko's public market_chart endpoint throttles by IP, and a 429 body is a
-// JSON error object with no candles in it. Keyless exchange APIs serve the same
-// OHLC history, so the chart lane falls through to them instead of sitting on a
-// frozen chart until the rate limit window passes. Kraken covers all seven
-// currencies, Binance all but CHF and CAD, Bitstamp only USD/EUR/GBP.
+// Exchange OHLC history is used when the primary chart cannot be drawn.
 var BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines";
 var KRAKEN_OHLC_URL = "https://api.kraken.com/0/public/OHLC";
 var BITSTAMP_OHLC_URL = "https://www.bitstamp.net/api/v2/ohlc/";
 
-var BINANCE_PAIRS = { USD: "BTCUSDT", EUR: "BTCEUR", GBP: "BTCGBP", AUD: "BTCAUD", JPY: "BTCJPY" };
+var BINANCE_PAIRS = { EUR: "BTCEUR", GBP: "BTCGBP", AUD: "BTCAUD", JPY: "BTCJPY" };
 var KRAKEN_PAIRS = { USD: "XBTUSD", EUR: "XBTEUR", GBP: "XBTGBP", CAD: "XBTCAD", CHF: "XBTCHF", JPY: "XBTJPY", AUD: "XBTAUD" };
 var BITSTAMP_PAIRS = { USD: "btcusd", EUR: "btceur", GBP: "btcgbp" };
 
-// Candle size per range, kept close to coingecko's own granularity so both
-// sources draw the same shape: 5-minute candles over 24h, hourly up to 30d,
-// daily for 1y. Kraken OHLC takes no limit and always answers its 720 most
-// recent candles, so every fallback series is trimmed to `points`.
+// Match the resolution requested by chartUrl, including daily candles for 30d.
 var CHART_STEPS = {
-  "24h": { binance: "5m", kraken: 5, bitstamp: 300, points: 288 },
-  "7d": { binance: "1h", kraken: 60, bitstamp: 3600, points: 168 },
-  "30d": { binance: "1h", kraken: 60, bitstamp: 3600, points: 720 },
-  "1y": { binance: "1d", kraken: 1440, bitstamp: 86400, points: 366 }
+  "24h": { binance: "5m", seconds: 300, points: 288 },
+  "7d": { binance: "1h", seconds: 3600, points: 168 },
+  "30d": { binance: "1d", seconds: 86400, points: 31 },
+  "1y": { binance: "1d", seconds: 86400, points: 366 }
 };
 
-// Ordered so coingecko stays the primary source and the mirrors are requested
-// only when its body carried no candles. `check` is the substring the shell
-// script greps for to decide the request succeeded, so a rate limited coingecko
-// costs exactly one extra request instead of three.
 function chartSources(currency, range) {
   var code = normalizeCurrency(currency);
-  var key = normalizeRange(range);
-  var step = CHART_STEPS[key];
-  var out = [{ source: "coingecko", url: chartUrl(code, key), check: "\"prices\"" }];
-  if (BINANCE_PAIRS[code]) {
-    out.push({
-      source: "binance",
-      url: BINANCE_KLINES_URL + "?symbol=" + BINANCE_PAIRS[code]
-        + "&interval=" + step.binance + "&limit=" + step.points,
-      check: "__HTTP_200__"
-    });
-  }
-  if (KRAKEN_PAIRS[code]) {
-    out.push({
-      source: "kraken",
-      url: KRAKEN_OHLC_URL + "?pair=" + KRAKEN_PAIRS[code] + "&interval=" + step.kraken,
-      // Kraken answers HTTP 200 with a non-empty error array for a bad pair.
-      check: "\"result\""
-    });
-  }
-  if (BITSTAMP_PAIRS[code]) {
-    out.push({
-      source: "bitstamp",
-      url: BITSTAMP_OHLC_URL + BITSTAMP_PAIRS[code] + "/?step=" + step.bitstamp
-        + "&limit=" + step.points,
-      check: "\"ohlc\""
-    });
+  var step = CHART_STEPS[normalizeRange(range)];
+  var out = [{ source: "coingecko", url: chartUrl(code, range) }];
+  if (BINANCE_PAIRS[code]) out.push({ source: "binance", url: BINANCE_KLINES_URL
+    + "?symbol=" + BINANCE_PAIRS[code] + "&interval=" + step.binance + "&limit=" + step.points });
+  out.push({ source: "kraken", url: KRAKEN_OHLC_URL + "?pair=" + KRAKEN_PAIRS[code]
+    + "&interval=" + step.seconds / 60 });
+  if (BITSTAMP_PAIRS[code]) out.push({ source: "bitstamp", url: BITSTAMP_OHLC_URL
+    + BITSTAMP_PAIRS[code] + "/?step=" + step.seconds + "&limit=" + step.points });
+  return out;
+}
+
+function positiveNumber(value) {
+  if (typeof value !== "number" && typeof value !== "string") return NaN;
+  var n = Number(value);
+  return isFinite(n) && n > 0 ? n : NaN;
+}
+
+function parseBinanceKlines(raw) {
+  if (!Array.isArray(raw)) return null;
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var row = raw[i];
+    if (!Array.isArray(row)) continue;
+    var open = positiveNumber(row[0]);
+    var end = positiveNumber(row[6]);
+    var price = positiveNumber(row[4]);
+    if (end > open && price > 0) out.push({ ts: open, end: end, price: price });
   }
   return out;
 }
 
-function tailSeries(series, limit) {
-  if (!series || series.length <= limit) return series;
-  return series.slice(series.length - limit);
-}
-
-function seriesFromCoingecko(raw) {
-  var parsed = parseCoingeckoChart(raw);
-  return parsed ? parsed.series : null;
-}
-
-// binance klines: [[openTimeMs, open, high, low, close, volume, ...], ...]
-function parseBinanceKlines(raw) {
-  if (!raw || !raw.length) return null;
-  var out = [];
-  for (var i = 0; i < raw.length; i++) {
-    var candle = raw[i];
-    if (!candle || candle.length < 5) continue;
-    var ts = Number(candle[0]);
-    var price = Number(candle[4]);
-    if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
-  }
-  return out.length >= 2 ? out : null;
-}
-
-// kraken: {"error":[],"result":{"XXBTZUSD":[[timeSec,open,high,low,close,...]],"last":...}}
-// The result key is the pair's internal name, which differs per pair
-// (XXBTZUSD against XBTCHF), so the first key that is not "last" wins.
 function parseKrakenOhlc(raw) {
-  if (!raw || !raw.result) return null;
+  if (!raw || !raw.result || (raw.error && raw.error.length)) return null;
   for (var key in raw.result) {
-    if (key === "last") continue;
     var rows = raw.result[key];
-    if (!rows || !rows.length) continue;
+    if (key === "last" || !Array.isArray(rows)) continue;
     var out = [];
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
-      if (!row || row.length < 5) continue;
-      var ts = Number(row[0]) * 1000;
-      var price = Number(row[4]);
-      if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
+      if (!Array.isArray(row)) continue;
+      var ts = positiveNumber(row[0]) * 1000;
+      var price = positiveNumber(row[4]);
+      if (ts > 0 && price > 0) out.push({ ts: ts, price: price });
     }
-    if (out.length >= 2) return out;
+    return out;
   }
   return null;
 }
 
-// bitstamp: {"data":{"ohlc":[{"timestamp":"...","close":"..."}]}}
 function parseBitstampOhlc(raw) {
   var rows = raw && raw.data && raw.data.ohlc;
-  if (!rows || !rows.length) return null;
+  if (!Array.isArray(rows)) return null;
   var out = [];
   for (var i = 0; i < rows.length; i++) {
-    var ts = Number(rows[i].timestamp) * 1000;
-    var price = Number(rows[i].close);
-    if (isFinite(ts) && isFinite(price) && price > 0) out.push({ ts: ts, price: price });
+    var row = rows[i];
+    if (!row) continue;
+    var ts = positiveNumber(row.timestamp) * 1000;
+    var price = positiveNumber(row.close);
+    if (ts > 0 && price > 0) out.push({ ts: ts, price: price });
   }
-  return out.length >= 2 ? out : null;
+  return out;
 }
 
-// Every mirror reports the close of each candle, which is the same shape
-// coingecko's market_chart returns.
-function fallbackChartSeries(source, range, raw) {
-  var series = null;
-  if (source === "binance") series = parseBinanceKlines(raw);
-  else if (source === "kraken") series = parseKrakenOhlc(raw);
-  else if (source === "bitstamp") series = parseBitstampOhlc(raw);
-  if (!series) return null;
-  var step = CHART_STEPS[normalizeRange(range)];
-  return tailSeries(series, step ? step.points : series.length);
+// Accept only successful curl responses carrying the explicit HTTP trailer.
+function chartResponse(source, range, raw, exitCode, now) {
+  if (exitCode !== 0) return null;
+  var trailer = /\n__HTTP_200__\s*$/.exec(raw);
+  if (!trailer) return null;
+  var data;
+  try { data = JSON.parse(raw.slice(0, trailer.index)); }
+  catch (e) { return null; }
+  var step = CHART_STEPS[range];
+  var interval = step.seconds * 1000;
+  var span = rangeKeyToDays(range) * 86400000;
+  var series;
+  if (source === "coingecko") {
+    var parsed = parseCoingeckoChart(data);
+    series = parsed && parsed.series;
+  } else {
+    if (source === "binance") series = parseBinanceKlines(data);
+    if (source === "kraken") series = parseKrakenOhlc(data);
+    if (source === "bitstamp") series = parseBitstampOhlc(data);
+    if (series) series = series.slice(-step.points).map(function(row) {
+      // A still-open candle contains the latest observed trade.
+      var end = row.end || row.ts + interval - 1;
+      return { ts: row.ts > now ? NaN : Math.min(now, end), price: row.price };
+    });
+  }
+  if (!series || series.length < 2) return null;
+  // Allow a missing boundary sample and the current partial candle.
+  var tolerance = 2 * interval;
+  var first = series[0].ts;
+  var last = series[series.length - 1].ts;
+  if (Math.abs(first - (now - span)) > tolerance || now - last > tolerance || last > now) return null;
+  for (var i = 0; i < series.length; i++) {
+    if (!isFinite(series[i].ts) || (i && (series[i].ts <= series[i - 1].ts
+        || series[i].ts - series[i - 1].ts > 3 * interval))) return null;
+  }
+  return series;
 }
 
 // mempool.space returns whole-unit prices per currency:
@@ -306,9 +295,9 @@ function parseCoingeckoChart(raw) {
   var series = [];
   for (var i = 0; i < prices.length; i++) {
     var point = prices[i];
-    if (!point || point.length < 2) continue;
-    var ts = Number(point[0]);
-    var price = Number(point[1]);
+    if (!Array.isArray(point) || point.length < 2) continue;
+    var ts = positiveNumber(point[0]);
+    var price = positiveNumber(point[1]);
     if (isFinite(ts) && isFinite(price) && price > 0) series.push({ ts: ts, price: price });
   }
   return series.length >= 2 ? { series: series } : null;
@@ -1362,7 +1351,10 @@ function parseState(raw) {
     series: series,
     ts: Number(parsed.ts) || 0,
     sources: Array.isArray(parsed.sources) ? parsed.sources : [],
-    chartRange: normalizeRange(parsed.chartRange),
+    chartRange: parsed.chartRange,
+    chartCurrency: parsed.chartCurrency,
+    chartSource: parsed.chartSource,
+    chartFetchedAt: Number(parsed.chartFetchedAt) || 0,
     fees: parsed.fees && typeof parsed.fees === "object" ? parsed.fees : null,
     blockHeight: Number(parsed.blockHeight) || 0,
     hashrate: Number(parsed.hashrate) || 0,

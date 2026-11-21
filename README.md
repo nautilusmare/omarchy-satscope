@@ -75,8 +75,9 @@ All public and key-less:
 - [mempool.space](https://mempool.space) — price, block height, fees, hash rate, difficulty
 - [CoinGecko](https://www.coingecko.com) — spot price and historical chart
 - [Binance](https://www.binance.com), [Kraken](https://api.kraken.com) and
-  [Bitstamp](https://www.bitstamp.net) — chart candles, requested only when
-  CoinGecko's `market_chart` endpoint is rate limited (HTTP 429)
+  [Bitstamp](https://www.bitstamp.net) — chart candles, requested in sequence when
+  the primary chart request fails (including HTTP 429) or its history is unusable.
+  Only matching fiat pairs are used. Cached charts are marked stale after a failed refresh
 - [Alternative.me](https://alternative.me/crypto/fear-and-greed-index/) — Fear & Greed index
 - [Farside Investors](https://farside.co.uk/btc/) — US spot-bitcoin ETF daily net flows
 - [Kalshi](https://kalshi.com) — implied BTC price distribution (series `KXBTCY`)
